@@ -4,9 +4,9 @@
   "type": "konnector",
   "language": "node",
   "icon": "icon.png",
-  "slug": "template",
+  "slug": "topachat",
   "source": "git@github.com:alexperseval/cozy-konnector-topachat.git",
-  "editor": "Cozy",
+  "editor": "alexperseval",
   "vendor_link": "https://www.topachat.com/",
   "categories": ["shopping"],
   "fields": {
