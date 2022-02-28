@@ -32,7 +32,7 @@ module.exports = new BaseKonnector(start)
 
 async function start(fields, cozyParameters) {
   log('info', 'Authenticating ...')
-  //if (cozyParameters) log('debug', 'Found COZY_PARAMETERS')
+  if (cozyParameters) log('debug', 'Found COZY_PARAMETERS')
   await getVerificationToken(fields.email)
   await authenticate.bind(this)(fields.email, fields.password)
 
