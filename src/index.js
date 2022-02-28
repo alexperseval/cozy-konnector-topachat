@@ -64,7 +64,7 @@ async function start(fields, cozyParameters) {
     billsFinal.then(async function (result) {
       if (result) {
         await saveBills(result, fields, {
-          idenditifiers: ['topachat'], // name of the target website
+          identifiers: ['topachat'], // name of the target website
           contentType: 'application/pdf',
           linkBankOperations: false
         })
