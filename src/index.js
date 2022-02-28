@@ -3,29 +3,28 @@ const {
   requestFactory,
   scrape,
   log,
-  saveBills,
-  utils
+  saveBills
 } = require('cozy-konnector-libs')
 
 const moment = require('moment')
-const cheerio = require('cheerio');
+const cheerio = require('cheerio')
 
 const request = requestFactory({
   cheerio: true,
   json: false,
-  jar: true,
-  //debug: true
+  jar: true
+  // debug: true
 })
 
 const requestJSON = requestFactory({
   cheerio: false,
   json: true,
-  jar: true,
-  //debug: true
+  jar: true
+  // debug: true
 })
 
 const VENDOR = 'topachat'
-const baseUrl = 'https://www.topachat.com/'
+// const baseUrl = 'https://www.topachat.com/'
 const secureUrl = 'https://secure.topachat.com'
 
 module.exports = new BaseKonnector(start)
@@ -38,7 +37,9 @@ async function start(fields, cozyParameters) {
 
   log('info', 'Successfully logged in')
 
-  const yearsWithBill = await requestJSON.post(`${secureUrl}/Orders/CompletedOrdersPeriodSelection`)
+  const yearsWithBill = await requestJSON.post(
+    `${secureUrl}/Orders/CompletedOrdersPeriodSelection`
+  )
 
   if (yearsWithBill) {
     log('info', 'Fetching the list of bills')
@@ -46,22 +47,24 @@ async function start(fields, cozyParameters) {
     let billsDetailsUrl = []
 
     for (var year of yearsWithBill) {
-
-      const yearDetails = await request.post(`${secureUrl}/Orders/PartialCompletedOrdersHeader`, {
-        form: {
-          Duration: year['Duration'],
-          Value: year['Value']
+      const yearDetails = await request.post(
+        `${secureUrl}/Orders/PartialCompletedOrdersHeader`,
+        {
+          form: {
+            Duration: year['Duration'],
+            Value: year['Value']
+          }
         }
-      })
+      )
 
       const $ = cheerio.load(yearDetails.html())
-      $('.historic-cell--details > a').each(function (i, e) {
+      $('.historic-cell--details > a').each(function() {
         billsDetailsUrl.push($(this).attr('href'))
       })
     }
 
     const billsFinal = parseBills(billsDetailsUrl)
-    billsFinal.then(async function (result) {
+    billsFinal.then(async function(result) {
       if (result) {
         await saveBills(result, fields, {
           identifiers: ['topachat'], // name of the target website
@@ -71,10 +74,9 @@ async function start(fields, cozyParameters) {
       }
     })
   }
-
 }
 
-//Il y a un token à récupérer pour se log en fonction de l'email
+// Il y a un token à récupérer pour se log en fonction de l'email
 function getVerificationToken(email) {
   return request.get({
     method: 'GET',
@@ -90,8 +92,10 @@ function authenticate(email, password) {
       Email: email,
       Password: password
     },
-    validate: (statusCode, $, fullResponse) => {
-      if ($(`a[href='https://secure.topachat.com/Account/Logout']`).length === 1) {
+    validate: (statusCode, $) => {
+      if (
+        $(`a[href='https://secure.topachat.com/Account/Logout']`).length === 1
+      ) {
         return true
       } else {
         log('error', $('.error').text())
@@ -140,22 +144,35 @@ async function parseBills(urls) {
     bills.push(
       bill.map(bill => ({
         ...bill,
-        filename: moment(bill['date']).format('YYYY-MM-DD') + ' - ' + bill['title'] + ".pdf",
+        filename:
+          moment(bill['date']).format('YYYY-MM-DD') +
+          ' - ' +
+          bill['title'] +
+          '.pdf',
         vendor: VENDOR,
         currency: '€'
-      })
-      )[0]
+      }))[0]
     )
   }
   return bills
 }
 
 function parseId(id) {
-  return id.split('?')[1].split('&')[0].split('=')[1]
+  return id
+    .split('?')[1]
+    .split('&')[0]
+    .split('=')[1]
 }
 
 function parseDate(date) {
-  const d = decodeURIComponent(date.split('?')[1].split('&')[1].split('=')[1]).split(' ')[0].split("/")
+  const d = decodeURIComponent(
+    date
+      .split('?')[1]
+      .split('&')[1]
+      .split('=')[1]
+  )
+    .split(' ')[0]
+    .split('/')
   const year = d[2]
   const month = d[0] - 1
   const day = d[1]
